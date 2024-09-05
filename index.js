@@ -17,7 +17,7 @@ const corsOptions = {
   origin: "*", // Allow ALL domains
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
   allowedHeaders: ["Content-Type", "Authorization"], // Allowed headers
-  credentials: true, // Allow credentials like cookies and tokens if needed
+  // credentials: true, // Allow credentials like cookies and tokens if needed
 };
 
 app.use(cors(corsOptions));
