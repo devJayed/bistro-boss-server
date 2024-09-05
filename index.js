@@ -16,7 +16,7 @@ const port = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-// connection string
+// Connection string
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.4vti4xu.mongodb.net/?retryWrites=true&w=majority`;
 
@@ -32,7 +32,7 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    // await client.connect();
+    await client.connect();
 
     // Define Collections
     const menuCollection = client.db("bistroDB").collection("menu");
@@ -235,7 +235,7 @@ async function run() {
       const payment = req.body;
       const paymentResult = await paymentCollection.insertOne(payment);
 
-      // carefully delete each item from the cart
+      // Carefully delete each item from the cart
       // console.log("payment info: ", payment);
       const query = {
         _id: {
@@ -248,7 +248,7 @@ async function run() {
       res.send({ paymentResult, deleteResult });
     });
 
-    // Stats or analytics
+    // Statistics (Stats) or analytics
     app.get("/admin-stats", verifyToken, verifyAdmin, async (req, res) => {
       const users = await usersCollection.estimatedDocumentCount();
       const menuItems = await menuCollection.estimatedDocumentCount();
@@ -285,28 +285,38 @@ async function run() {
     });
 
     // Using aggregate pipeline
+    /**
+     * ----------------------------
+     *    NON-Efficient Way
+     * ------------------------------
+     * 1. load all the payments
+     * 2. for every menuItemIds (which is an array), go find the item from menu collection
+     * 3. for every item in the menu collection that you found from a payment entry (document)
+     */
+    // Using aggregate pipeline 
     app.get("/order-stats", verifyToken, verifyAdmin, async (req, res) => {
       const result = await paymentCollection
         .aggregate([
           {
-            $unwind: "$menuItemId",
+            $unwind: "$menuItemIds",
           },
           {
             $lookup: {
               from: "menu",
-              localField: "menuItemId",
+              localField: "menuItemIds",
               foreignField: "_id",
-              as: "menuItem",
+              as: "menuItems",
             },
           },
+          // Since $lookup results in an array (even if it's just one matched item), we need to "unwind" the array so that we can work with individual documents.
           {
-            $unwind: "$menuItem",
+            $unwind: "$menuItems",
           },
           {
             $group: {
-              _id: "$menuItem.category",
+              _id: "$menuItems.category",
               quantity: { $sum: 1 },
-              revenue: { $sum: "$menuItem.price" },
+              revenue: { $sum: "$menuItems.price" },
             },
           },
           {
@@ -318,15 +328,15 @@ async function run() {
             },
           },
         ])
-        .toArray();
+        .toArray(); // It converts a MongoDB cursor (which is the result of a query) into an array of documents.
       res.send(result);
     });
 
     // Send a ping to confirm a successful connection
-    // await client.db("admin").command({ ping: 1 });
-    // console.log(
-    //   "Pinged your deployment. You successfully connected to MongoDB!"
-    // );
+    await client.db("admin").command({ ping: 1 });
+    console.log(
+      "Pinged your deployment. You successfully connected to MongoDB!"
+    );
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close(); // avoiding error - Client must be connected before running operations
