@@ -14,11 +14,7 @@ const port = process.env.PORT || 5000;
 //Middleware Setup
 // MongoDB Setup
 const corsOptions = {
-  origin: [
-    "http://localhost:5173",
-    "https://bistro-boss-f43fa.web.app",
-    "https://bistro-boss-server-opal-nu.vercel.app",
-  ], // Allow specific domains
+  origin: "*", // Allow ALL domains
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
   allowedHeaders: ["Content-Type", "Authorization"], // Allowed headers
   credentials: true, // Allow credentials like cookies and tokens if needed
