@@ -13,7 +13,16 @@ const port = process.env.PORT || 5000;
 
 //Middleware Setup
 // MongoDB Setup
-app.use(cors());
+const corsOptions = {
+  origin: [
+    "https://bistro-boss-f43fa.web.app",
+    "https://bistro-boss-server-opal-nu.vercel.app",
+  ], // Allow specific domains
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+  credentials: true, // Allow credentials like cookies and tokens if needed
+};
+
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Connection string
